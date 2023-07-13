@@ -1,3 +1,6 @@
+
+
+
 relatedness_config = {
     'description' : 'relatedness refers to the degree of relevance between the question and the passage.',
 
@@ -21,6 +24,8 @@ relatedness_instructions = f'''
     7. If {relatedness_config['r3_desc']}, the question should be deemed "{relatedness_config['r3']}".
     8. Explain your ratings, but only return the ratings as the final output.
 '''
+
+
 
 conciseness_config = {
     'description' : 'conciseness refers to the quality of the question being clear and brief.',
@@ -47,13 +52,33 @@ conciseness_instructions = f'''
     9. Explain your ratings, but only return the ratings as the final output
 '''
 
-completeness_config = {
 
+
+completeness_config = {
+    'description' : 'completeness refers to whether the set of questions cover all the facts of the passage.',
+
+    'r1' : 'incomplete',
+    'r2' : 'somwhat complete',
+    'r3' : 'complete',
+
+    'r1_desc' : 'the questions cover less than half of the information in the passage',
+    'r2_desc' : 'the questions cover most of the information in the passage',
+    'r3_desc' : 'the questions cover all of the information in the passage',
 }
 
-completeness_instructions = '''
-
+completeness_instructions = f'''
+    Instructions:
+    1. Read the passage carefully.
+    2. Read through the questions.
+    3. Assess the completeness of all the questions as a whole, meaning that for a list of questions, you must only return one rating.
+    4. Rate the set of questions on a scale of 1 to 3, with 1 meaning "{completeness_config['r1']}," 2 meaning "{completeness_config['r2']}," and 3 meaning "{completeness_config['r3']}."
+    5. If {completeness_config['r1_desc']}, the question should be deemed "{completeness_config['r1']}".
+    6. If {completeness_config['r2_desc']}, the question should be deemed "{completeness_config['r2']}".
+    7. If {completeness_config['r3_desc']}, the question should be deemed "{completeness_config['r3']}".
+    8. Explain your ratings, but only return the ratings as the final output.
 '''
+
+
 
 prompt_config = {
         'relatedness' : relatedness_instructions,
