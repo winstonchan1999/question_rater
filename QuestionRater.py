@@ -56,7 +56,7 @@ class QuestionRater:
                     
                     Passage: {QA_dict['passage']} \ 
 
-                    Return only one rating
+                    Return only one digit
                 """
         
         return prompt
