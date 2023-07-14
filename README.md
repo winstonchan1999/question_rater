@@ -64,7 +64,7 @@ The method `get_rating_with_custom_prompt()` takes a custom prompt as the sole p
 
 ### Method `get_all_ratings()`
 
-The method `get_all_ratings()` is used to get a the ratings on all criteria for a list of questions. It takes one parameter:
+The method `get_all_ratings()` is used to get the ratings on all criteria for a list of questions. It takes one parameter:
 
 - `QA_dict`: a dictionary containing three keys - 'company', 'questions', and 'passage'
 
