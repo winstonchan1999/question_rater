@@ -65,9 +65,29 @@ class QuestionRater:
 
 
 
+    def __check_dict(self, dic : dict):
+        required_keys = {'company', 'questions', 'passage'}
+
+        if not required_keys.issubset(dic.keys()):
+            raise ValueError("Missing required keys")
+        
+        for key, value in dic.items():
+            if key == 'company':
+                if not isinstance(value, str):
+                    raise TypeError("Value for 'company' must be a string.")
+            elif key == 'questions':
+                if not isinstance(value, list):
+                    raise TypeError("Value for 'questions' must be a list.")
+            elif key == 'passage':
+                if not isinstance(value, str):
+                    raise TypeError("Value for 'passage' must be a string.")
+
+
+
     def get_rating(self, QA_dict : dict, criteria : str):
 
         try:
+            self.__check_dict(QA_dict)
             prompt = self.__get_prompt(QA_dict, criteria.lower())
             response = self.__get_completion(prompt)
             return response
@@ -90,6 +110,7 @@ class QuestionRater:
     def get_qset_rating(self, QA_dict : dict, criteria : str):
 
         try:
+            self.__check_dict(QA_dict)
             prompt = self.__get_qset_prompt(QA_dict, criteria.lower())
             response = self.__get_completion(prompt)
             return response
@@ -133,6 +154,8 @@ class QuestionRater:
     def get_all_ratings(self, QA_dict : dict):
 
         try:
+
+            self.__check_dict(QA_dict)
 
             rating_dict = {}
 
