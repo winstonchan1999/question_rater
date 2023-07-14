@@ -90,7 +90,8 @@ class QuestionRater:
             self.__check_dict(QA_dict)
             prompt = self.__get_prompt(QA_dict, criteria.lower())
             response = self.__get_completion(prompt)
-            return response
+            
+            return eval(response)
         
         except (
             openai.error.Timeout, 
@@ -113,7 +114,7 @@ class QuestionRater:
             self.__check_dict(QA_dict)
             prompt = self.__get_qset_prompt(QA_dict, criteria.lower())
             response = self.__get_completion(prompt)
-            return response
+            return int(response)
         
         except (
             openai.error.Timeout, 
@@ -162,7 +163,7 @@ class QuestionRater:
             for key, value in prompt_config.items():
 
                 if value.get_rating_method() == 'individual':
-                    new_dict = eval(self.get_rating(QA_dict, key))
+                    new_dict = self.get_rating(QA_dict, key)
                     if not rating_dict:
                         rating_dict = new_dict
                         for _key in rating_dict:
@@ -173,7 +174,7 @@ class QuestionRater:
                                 rating_dict[_key].append(new_dict[_key])
 
                 elif value.get_rating_method() == 'set':
-                    rating = int(self.get_qset_rating(QA_dict, key))
+                    rating = self.get_qset_rating(QA_dict, key)
                     if not rating_dict:
                         for question in QA_dict['questions']:
                             rating_dict[question] = [rating]

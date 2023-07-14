@@ -15,7 +15,7 @@ The method `get_rating()` is used to get ratings for each individual question in
 - `QA_dict`: a dictionary containing three keys - 'company', 'questions', and 'passage'
 - `criteria`: the string of the criterion to evaluate the questions on
 
-It returns the ratings as a string in the format of JSON (questions as keys; ratings as values). An example of the output string:
+It returns the ratings as a Python dictionary (questions as keys; ratings as values). An example of the output dictionary:
 ```
 {
   "How do I close the window?": 3,
@@ -56,7 +56,7 @@ The method `get_qset_rating()` is used to get a single rating for a list of ques
 - `QA_dict`: a dictionary containing three keys - 'company', 'questions', and 'passage'
 - `criteria`: the string of the criterion to evaluate the questions on
 
-For each call to this method, it returns a single digit of the rating in the form of a string.
+For each call to this method, it returns a single digit integer of the rating.
 
 ### Method `get_rating_with_custom_prompt()`
 
