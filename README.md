@@ -39,11 +39,11 @@ criteria = 'relatedness'
 QA_dict = {
     'company' : 'Tesla',                         ## company of the OEM
 
-    'questions' : '''
-        When is model 3 released?,               ## list of questions to be evaluated
+    'questions' : [
+        When is model 3 released?,               ## list of questions to be evaluated, must be a Python list !
         Can I use my phone as the key?,
         ...
-    ''',
+    ],
 
     'passage' : 'Tesla model 3 is...'            ## the context passage from which the questions are generated
 }
@@ -61,6 +61,14 @@ For each call to this method, it returns a single digit of the rating in the for
 ### Method `get_rating_with_custom_prompt()`
 
 The method `get_rating_with_custom_prompt()` takes a custom prompt as the sole parameter and returns the string of the response.
+
+### Method `get_all_ratings()`
+
+The method `get_all_ratings()` is used to get a the ratings on all criteria for a list of questions. It takes one parameter:
+
+- `QA_dict`: a dictionary containing three keys - 'company', 'questions', and 'passage'
+
+The ratings are returned as a Python dictionary.
 
 ## prompt_config.py
 
