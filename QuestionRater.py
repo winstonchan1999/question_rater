@@ -24,6 +24,19 @@ class QuestionRater:
 
 
 
+    def __get_completion_maxtoken(self, prompt, max_token):
+        messages = [{"role": "user", "content": prompt}]
+        response = openai.ChatCompletion.create(
+            messages = messages,
+            model = self.model_config['model'],
+            temperature = self.model_config['temperature'],
+            n = self.model_config['n'],
+            max_tokens = max_token
+        )
+        return response.choices[0].message["content"]
+
+
+
     def __get_prompt(self, QA_dict : dict, criteria : str):
 
         prompt = f"""
@@ -57,10 +70,7 @@ class QuestionRater:
                     {QA_dict['questions']}
                     
                     Passage: {QA_dict['passage']} \ 
-
-                    Return only one digit
                 """
-        
         return prompt
 
 
@@ -114,7 +124,18 @@ class QuestionRater:
             self.__check_dict(QA_dict)
             prompt = self.__get_qset_prompt(QA_dict, criteria.lower())
             response = self.__get_completion(prompt)
-            return int(response)
+            final_prompt = f'''
+                Given {response},
+                Compare x and y:
+                If y = x, set "z" as 3
+                If y >= x/2, set "z" as 2
+                If y < x/2, set "z" as 1
+
+                Return z only without telling me your explanation.
+            '''
+
+            final_response = self.__get_completion_maxtoken(final_prompt, 1)
+            return int(final_response)
         
         except (
             openai.error.Timeout, 

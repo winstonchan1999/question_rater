@@ -104,14 +104,17 @@ class completeness(criteria):
 
         instructions = f'''
             Instructions:
-            1. Read the passage carefully.
+            1. Read the passage carefully. Identify the number of major aspects in the passage as "x", do not change "x".
             2. Read through the questions.
-            3. Assess the completeness of all the questions as a whole, meaning that for a list of questions, you must only return one rating.
-            4. Rate the set of questions on a scale of 1 to 3, with 1 meaning "{r1}," 2 meaning "{r2}," and 3 meaning "{r3}."
-            5. If {r1_desc}, the question should be deemed "{r1}".
-            6. If {r2_desc}, the question should be deemed "{r2}".
-            7. If {r3_desc}, the question should be deemed "{r3}".
-            8. Explain your ratings, but only return the ratings as the final output.
+            3. Assess the completeness of the question set as a whole, meaning you are rating the question set as a collective, but not the questions individually.
+            4. Note that each question in the set can cover only some aspect of the passage, the goal is to evaluate if all major aspects of the passage are covered.
+            5. Note that the rating correlates with the number of questions. In most case, more questions = higher rating, fewer questions = lower rating.
+            6. Questions do not need to cover unnecessary or extraneous detail, just the major aspects.
+            7. Identify the number of major aspects covered by the questions as "y".
+            8. If "x" = "y", give a 3. 
+            9. If "y" is larger than or equal to half of "x", give a 2.
+            10. If "y" is less than half of "x", give a 1.
+            11. Show me "x" and "y" in json format.
         '''
 
         super().__init__(rating_method, description, r1, r2, r3, r1_desc, r2_desc, r3_desc, instructions)
@@ -119,7 +122,7 @@ class completeness(criteria):
 
 
 prompt_config = {
-        'relatedness' : relatedness(),
-        'conciseness' : conciseness(),
-        'completeness' : completeness(),
-    }
+    'relatedness' : relatedness(),
+    'conciseness' : conciseness(),
+    'completeness' : completeness(),
+}
