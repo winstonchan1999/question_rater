@@ -37,7 +37,7 @@ Note that `QA_dict` and `criteria` are used to create the prompt. An example of 
 criteria = 'relatedness'
 
 QA_dict = {
-    'company' : 'Tesla',                         ## company of the OEM
+    'company' : 'Tesla',                         ## name of company
 
     'questions' : [
         When is model 3 released?,               ## list of questions to be evaluated, must be a Python list !
