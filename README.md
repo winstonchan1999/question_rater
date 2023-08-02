@@ -55,7 +55,7 @@ QA_dict = {
 
 The method `get_qset_rating()` is used to get a single rating for a list of questions. It takes two parameters:
 
-- `QA_dict`: a dictionary containing three keys - 'company', 'questions', and 'passage'
+- `QA_dict`: a dictionary containing four keys - 'company', 'questions', 'passage', and 'title'.
 - `criteria`: the string of the criterion to evaluate the questions on
 
 For each call to this method, it returns a single digit integer of the rating.
@@ -68,7 +68,7 @@ The method `get_rating_with_custom_prompt()` takes a custom prompt as the sole p
 
 The method `get_all_ratings()` is used to get the ratings on all criteria for a list of questions. It takes one parameter:
 
-- `QA_dict`: a dictionary containing three keys - 'company', 'questions', 'passage', and 'title'.
+- `QA_dict`: a dictionary containing four keys - 'company', 'questions', 'passage', and 'title'.
 
 The method returns 1) a Python dictionary, and 2) an integer.
 
