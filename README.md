@@ -46,6 +46,8 @@ QA_dict = {
     ],
 
     'passage' : 'Tesla model 3 is...'            ## the context passage from which the questions are generated
+
+    'title' : 'Accessing Tesla Model 3'          ## the section title of the passage
 }
 ```
 
@@ -66,9 +68,9 @@ The method `get_rating_with_custom_prompt()` takes a custom prompt as the sole p
 
 The method `get_all_ratings()` is used to get the ratings on all criteria for a list of questions. It takes one parameter:
 
-- `QA_dict`: a dictionary containing three keys - 'company', 'questions', and 'passage'
+- `QA_dict`: a dictionary containing three keys - 'company', 'questions', 'passage', and 'title'.
 
-The ratings are returned as a Python dictionary.
+The method returns 1) a Python dictionary, and 2) an integer.
 
 ## prompt_config.py
 
