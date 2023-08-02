@@ -102,10 +102,7 @@ class completeness(criteria):
             5. Note that the rating correlates with the number of questions. In most case, more questions = higher rating, fewer questions = lower rating.
             6. Questions do not need to cover unnecessary or extraneous detail, just the major aspects.
             7. Identify the number of major aspects covered by the questions as "y".
-            8. If "x" = "y", give a 3. 
-            9. If "y" is larger than or equal to half of "x", give a 2.
-            10. If "y" is less than half of "x", give a 1.
-            11. Show me "x" and "y" in json format.
+            8. Show me "x" and "y" in json format.
         '''
 
         super().__init__(rating_method, description, r1, r2, r3, r1_desc, r2_desc, r3_desc, instructions)

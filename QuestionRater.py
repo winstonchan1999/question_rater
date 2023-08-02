@@ -2,6 +2,7 @@ import openai
 from model_config import model_config
 from prompt_config import prompt_config
 import concurrent.futures
+import textwrap
 
 
 class QuestionRater:
@@ -39,57 +40,71 @@ class QuestionRater:
 
     def __get_prompt(self, QA_dict : dict, criteria : list):
 
-        prompt_list = []
+        prompt_list = [prompt_config[c].get_instructions() for c in criteria]
 
-        for c in criteria:
-            prompt_list.append(prompt_config[c].get_instructions())
-
-        instructions = '\n\n'.join(prompt_list)
+        instructions = '\n'.join(prompt_list)
 
         prompt = f"""
-                    You will be provided with a passage extracted from a {QA_dict['company']} manual and its section title.
+            You will be provided with a passage extracted from a {QA_dict['company']} manual and its section title.
 
-                    Instructions:
-                    1. Read the passage carefully.
-                    2. Read through the questions.
+            Instructions:
+            1. Read the passage carefully.
+            2. Read through the questions.
 
-                    {instructions}
+            {instructions}
 
-                    Questions:
-                    {QA_dict['questions']}
-                    
-                    Title: {QA_dict['title']}
+            Questions:
+            {QA_dict['questions']}
+            
+            Title: {QA_dict['title']}
 
-                    Passage: {QA_dict['passage']} 
+            Passage: {QA_dict['passage']} 
 
-                    Return the ratings in json format.
-                    Output the question as the key, and the list of ratings as the value
-                """
+            Return the ratings in json format.
+            Output the question as the key, and the list of ratings as the value
+        """
         
-        return prompt
+        return textwrap.dedent(prompt)
 
 
 
     def __get_qset_prompt(self, QA_dict : dict, criteria : str):
 
         prompt = f"""
-                    You will be provided with a passage extracted from a {QA_dict['company']} manual and its section title.
+            You will be provided with a passage extracted from a {QA_dict['company']} manual and its section title.
 
-                    Instructions:
-                    {prompt_config[criteria].get_instructions()}
+            Instructions:
+            {prompt_config[criteria].get_instructions()}
 
-                    Questions:
-                    {QA_dict['questions']}
-                    
-                    Title: {QA_dict['title']}
+            Questions:
+            {QA_dict['questions']}
+            
+            Title: {QA_dict['title']}
 
-                    Passage: {QA_dict['passage']}
-                """
-        return prompt
+            Passage: {QA_dict['passage']}
+        """
+        return textwrap.dedent(prompt)
+
+
+
+    def __get_qset_final_prompt(self, response: str):
+        
+        final_prompt = f'''
+            Given {response},
+            Compare x and y:
+            If y is larger than or equal to x, set "z" as 3
+            Else if  y is larger than or equal to half of x, set "z" as 2
+            Else, set "z" as 1
+
+            Return z only without telling me your explanation.
+        '''
+
+        return textwrap.dedent(final_prompt)
 
 
 
     def __check_dict(self, dic : dict):
+        
         required_keys = {'company', 'questions', 'passage', 'title'}
 
         if not required_keys.issubset(dic.keys()):
@@ -114,7 +129,7 @@ class QuestionRater:
     def get_rating(self, QA_dict : dict, criteria : str):
 
         if prompt_config[criteria].get_rating_method() != 'individual':
-            raise ValueError(f"You cannot use get_rating() with criteria '{criteria}'")
+            raise ValueError(f"You cannot use get_rating() with criteria '{criteria}'. Please use get_qset_rating() instead.")
 
         self.__check_dict(QA_dict)
         prompt = self.__get_prompt(QA_dict, [criteria.lower()])
@@ -127,21 +142,12 @@ class QuestionRater:
     def get_qset_rating(self, QA_dict : dict, criteria : str):
 
         if prompt_config[criteria].get_rating_method() != 'set':
-            raise ValueError(f"You cannot use get_qset_rating() with criteria '{criteria}'")
+            raise ValueError(f"You cannot use get_qset_rating() with criteria '{criteria}'. Please use get_rating() instead.")
 
         self.__check_dict(QA_dict)
         prompt = self.__get_qset_prompt(QA_dict, criteria.lower())
         response = self.__get_completion(prompt)
-        final_prompt = f'''
-            Given {response},
-            Compare x and y:
-            If y = x, set "z" as 3
-            If y >= x/2, set "z" as 2
-            If y < x/2, set "z" as 1
-
-            Return z only without telling me your explanation.
-        '''
-
+        final_prompt = self.__get_qset_final_prompt(response)
         final_response = self.__get_completion_maxtoken(final_prompt, 1)
         return int(final_response)
 
@@ -158,14 +164,8 @@ class QuestionRater:
 
         self.__check_dict(QA_dict)
 
-        in_list = []
-        set_list = []
-
-        for key, value in prompt_config.items():
-            if value.get_rating_method() == 'individual':
-                in_list.append(key)
-            elif value.get_rating_method() == 'set':
-                set_list.append(key)
+        in_list = [key for key, value in prompt_config.items() if value.get_rating_method() == 'individual']
+        set_list = [key for key, value in prompt_config.items() if value.get_rating_method() == 'set']
         
         prompt1 = self.__get_prompt(QA_dict, in_list)
         prompt2 = self.__get_qset_prompt(QA_dict, set_list[0])
@@ -177,20 +177,14 @@ class QuestionRater:
             completions_1 = future_1.result()
             completions_2 = future_2.result()
 
-        final_prompt = f'''
-            Given {completions_2},
-            Compare x and y:
-            If y = x, set "z" as 3
-            If y >= x/2, set "z" as 2
-            If y < x/2, set "z" as 1
+            final_prompt = self.__get_qset_final_prompt(completions_2)
+            future_3 = executor.submit(self.__get_completion_maxtoken, final_prompt, 1)
+            completion_3 = future_3.result()
 
-            Return z only without telling me your explanation.
-        '''
-
-        final_response = self.__get_completion_maxtoken(final_prompt, 1)
+            concurrent.futures.wait([future_1, future_2, future_3])
 
         dict1 = eval(completions_1)
-        int1 = int(final_response)
+        int1 = int(completion_3)
 
         return dict1, int1
 
