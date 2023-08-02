@@ -38,15 +38,11 @@ class relatedness(criteria):
         r3_desc = 'the passage explicitly states the answer to the question, and the focuses of the question and the passage are identical'
 
         instructions = f'''
-            Instructions:
-            1. Read the passage carefully.
-            2. Read through the questions.
             3. Assess the relatedness of each question to the passage content without assuming any information not explicitly stated.
             4. Rate the questions on a scale of 1 to 3, with 1 meaning "{r1}," 2 meaning "{r2}," and 3 meaning "{r3}."
             5. If {r1_desc}, the question should be deemed "{r1}".
             6. If {r2_desc}, the question should be deemed "{r2}".
             7. If {r3_desc}, the question should be deemed "{r3}".
-            8. Explain your ratings, but only return the ratings as the final output.
         '''
 
         super().__init__(rating_method, description, r1, r2, r3, r1_desc, r2_desc, r3_desc, instructions)
@@ -67,19 +63,15 @@ class conciseness(criteria):
 
         r1_desc = 'the question is unclear or contain unnecessary information'
         r2_desc = 'the question includes information that is not necessary, but it somewhat relates to the focus of the question'
-        r3_desc = 'the question is clear and effective, and the focus'
+        r3_desc = 'the question is clear and effective'
 
         instructions = f'''
-            Instructions:
-            1. Read the passage carefully.
-            2. Read through the questions.
             3. Assess the conciseness of each question to the passage content without assuming any information not explicitly stated.
             4. Rate the questions on a scale of 1 to 3, with 1 meaning "{r1}," 2 meaning "{r2}," and 3 meaning "{r3}."
             5. If {r1_desc}, the question should be a 1.
             6. If {r2_desc}, the question should be a 2.
             7. If {r3_desc}, the question should be a 3.
             8. Give a strict 1 if the question is a combination of at least two question.
-            9. Explain your ratings, but only return the ratings as the final output
         '''
 
         super().__init__(rating_method, description, r1, r2, r3, r1_desc, r2_desc, r3_desc, instructions)
@@ -103,7 +95,6 @@ class completeness(criteria):
         r3_desc = 'the questions cover all of the information in the passage'
 
         instructions = f'''
-            Instructions:
             1. Read the passage carefully. Identify the number of major aspects in the passage as "x", do not change "x".
             2. Read through the questions.
             3. Assess the completeness of the question set as a whole, meaning you are rating the question set as a collective, but not the questions individually.
