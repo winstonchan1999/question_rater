@@ -3,6 +3,18 @@ from model_config import model_config
 from prompt_config import prompt_config
 import concurrent.futures
 import textwrap
+import time
+
+
+
+max_retry_attempts = 5
+
+
+
+class MaxRetriesExceededError(Exception):
+    def __init__(self):
+        super().__init__("MaxRetriesExceededError")
+
 
 
 class QuestionRater:
@@ -129,13 +141,26 @@ class QuestionRater:
     def get_rating(self, QA_dict : dict, criteria : str):
 
         if prompt_config[criteria].get_rating_method() != 'individual':
-            raise ValueError(f"You cannot use get_rating() with criteria '{criteria}'. Please use get_qset_rating() instead.")
+            raise ValueError(f"You cannot use get_rating() with criteria '{criteria}'. Please use get_qset_rating() instead.") 
 
         self.__check_dict(QA_dict)
-        prompt = self.__get_prompt(QA_dict, [criteria.lower()])
-        response = self.__get_completion(prompt)
-        
-        return eval(response)
+
+        retries = max_retry_attempts
+        while retries > 0:
+            try:
+                prompt = self.__get_prompt(QA_dict, [criteria.lower()])
+                response = self.__get_completion(prompt)
+                
+                return eval(response)
+            except (
+                openai.error.Timeout, 
+                openai.error.APIError,
+            ) as e:
+                print(f"Retry attempt #{max_retry_attempts-retries+1}/{max_retry_attempts} - Sleeping for 5 seconds. (Error: {e})")
+                retries -= 1
+                if retries == 0:
+                    raise MaxRetriesExceededError(f"Max retries exceeded. Error: {e}.")
+                time.sleep(5)
 
 
 
@@ -145,19 +170,58 @@ class QuestionRater:
             raise ValueError(f"You cannot use get_qset_rating() with criteria '{criteria}'. Please use get_rating() instead.")
 
         self.__check_dict(QA_dict)
-        prompt = self.__get_qset_prompt(QA_dict, criteria.lower())
-        response = self.__get_completion(prompt)
-        final_prompt = self.__get_qset_final_prompt(response)
-        final_response = self.__get_completion_maxtoken(final_prompt, 1)
-        return int(final_response)
+
+        retries = max_retry_attempts
+        while retries > 0:
+            try:
+                prompt = self.__get_qset_prompt(QA_dict, criteria.lower())
+                response = self.__get_completion(prompt)
+                final_prompt = self.__get_qset_final_prompt(response)
+                final_response = self.__get_completion_maxtoken(final_prompt, 1)
+                return int(final_response)
+            except (
+                openai.error.Timeout, 
+                openai.error.APIError,
+            ) as e:
+                print(f"Retry attempt #{max_retry_attempts-retries+1}/{max_retry_attempts} - Sleeping for 5 seconds. (Error: {e})")
+                retries -= 1
+                if retries == 0:
+                    raise MaxRetriesExceededError(f"Max retries exceeded. Error: {e}.")
+                time.sleep(5)
 
 
 
     def get_rating_with_custom_prompt(self, prompt : str):
 
+        retries = max_retry_attempts
+        while retries > 0:
+            try:
+                response = self.__get_completion(prompt)
+                return response
+            except (
+                openai.error.Timeout, 
+                openai.error.APIError,
+            ) as e:
+                print(f"Retry attempt #{max_retry_attempts-retries+1}/{max_retry_attempts} - Sleeping for 5 seconds. (Error: {e})")
+                retries -= 1
+                if retries == 0:
+                    raise MaxRetriesExceededError(f"Max retries exceeded. Error: {e}.")
+                time.sleep(5)
+
+
+
+    def __get_ind(self, prompt : str):
         response = self.__get_completion(prompt)
-        return response
-    
+        return eval(response)
+
+
+
+    def __get_qset(self, prompt : str):
+        response = self.__get_completion(prompt)
+        final_prompt = self.__get_qset_final_prompt(response)
+        final_response = self.__get_completion_maxtoken(final_prompt, 1)
+        return int(final_response)
+
 
 
     def get_all_ratings(self, QA_dict : dict):
@@ -170,23 +234,65 @@ class QuestionRater:
         prompt1 = self.__get_prompt(QA_dict, in_list)
         prompt2 = self.__get_qset_prompt(QA_dict, set_list[0])
 
+        dict1 = None
+        int1 = None
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future_1 = executor.submit(self.__get_completion, prompt1)
-            future_2 = executor.submit(self.__get_completion, prompt2)
-            
-            completions_1 = future_1.result()
-            completions_2 = future_2.result()
+                future_1 = executor.submit(self.__get_ind, prompt1)
+                future_2 = executor.submit(self.__get_qset, prompt2)
+                
+                for future in concurrent.futures.as_completed([future_1, future_2]):
+                    try:
+                        result = future.result()
 
-            final_prompt = self.__get_qset_final_prompt(completions_2)
-            future_3 = executor.submit(self.__get_completion_maxtoken, final_prompt, 1)
-            completion_3 = future_3.result()
+                        if isinstance(result, dict):
+                            dict1 = result
+                        elif isinstance(result, int):
+                            int1 = result
 
-            concurrent.futures.wait([future_1, future_2, future_3])
+                        if dict1 is not None and int1 is not None:
+                            return dict1, int1
+                    except (
+                        openai.error.Timeout, 
+                        openai.error.APIError,
+                    ) as e:
+                        
+                        retries = max_retry_attempts
+                        while retries > 0:
+                            try:
+                                print(f"(Error: {e}) Retry attempt #{max_retry_attempts-retries+1}/{max_retry_attempts} - Sleeping for 5 seconds.")
+                                time.sleep(5)
+                                if future == future_1:
+                                    future_1 = executor.submit(self.__get_ind, prompt1)
+                                    result = future_1.result()
+                                elif future == future_2:
+                                    future_2 = executor.submit(self.__get_qset, prompt2)
+                                    result = future_2.result()
 
-        dict1 = eval(completions_1)
-        int1 = int(completion_3)
+                                if isinstance(result, dict):
+                                    dict1 = result
+                                elif isinstance(result, int):
+                                    int1 = result
 
-        return dict1, int1
+                                if dict1 is not None and int1 is not None:
+                                    return dict1, int1
+
+                                break
+                            except (
+                                openai.error.Timeout,
+                                openai.error.APIError,
+                            ) as e1:
+                                retries -= 1
+                                if retries == 0:
+                                    d_r = "available"
+                                    i_r = "available"
+                                    if dict1 is None:
+                                        d_r = 'None'
+                                    if int1 is None:
+                                        i_r = 'None'
+                                    
+                                    print(f"Max retries exceeded. Error: {e1}. Returning available ratings. (relatedness & conciseness: {d_r}; completeness: {i_r})")
+                                    return dict1, int1
 
 
 
