@@ -287,8 +287,10 @@ class QuestionRater:
                                     d_r = "available"
                                     i_r = "available"
                                     if dict1 is None:
+                                        dict1 = 0
                                         d_r = 'None'
                                     if int1 is None:
+                                        int1 = 0
                                         i_r = 'None'
                                     
                                     print(f"Max retries exceeded. Error: {e1}. Returning available ratings. (relatedness & conciseness: {d_r}; completeness: {i_r})")
