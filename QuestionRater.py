@@ -293,7 +293,7 @@ class QuestionRater:
                                         int1 = 0
                                         i_r = 'None'
                                     
-                                    print(f"Max retries exceeded. Error: {e1}. Returning available ratings. (relatedness & conciseness: {d_r}; completeness: {i_r})")
+                                    print(f"Max retries exceeded. Returning available ratings. (relatedness & conciseness: {d_r}; completeness: {i_r}) Error: {e1}.")
                                     return dict1, int1
 
 
