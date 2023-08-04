@@ -159,7 +159,8 @@ class QuestionRater:
                 print(f"Retry attempt #{max_retry_attempts-retries+1}/{max_retry_attempts} - Sleeping for 5 seconds. (Error: {e})")
                 retries -= 1
                 if retries == 0:
-                    raise MaxRetriesExceededError(f"Max retries exceeded. Error: {e}.")
+                    print("Max retries exceeded - Returning 0.")
+                    return 0
                 time.sleep(5)
 
 
@@ -186,7 +187,8 @@ class QuestionRater:
                 print(f"Retry attempt #{max_retry_attempts-retries+1}/{max_retry_attempts} - Sleeping for 5 seconds. (Error: {e})")
                 retries -= 1
                 if retries == 0:
-                    raise MaxRetriesExceededError(f"Max retries exceeded. Error: {e}.")
+                    print("Max retries exceeded - Returning 0.")
+                    return 0
                 time.sleep(5)
 
 
@@ -205,7 +207,8 @@ class QuestionRater:
                 print(f"Retry attempt #{max_retry_attempts-retries+1}/{max_retry_attempts} - Sleeping for 5 seconds. (Error: {e})")
                 retries -= 1
                 if retries == 0:
-                    raise MaxRetriesExceededError(f"Max retries exceeded. Error: {e}.")
+                    print("Max retries exceeded - Returning 0.")
+                    return 0
                 time.sleep(5)
 
 
@@ -293,7 +296,7 @@ class QuestionRater:
                                         int1 = 0
                                         i_r = 'None'
                                     
-                                    print(f"Max retries exceeded. Returning available ratings. (relatedness & conciseness: {d_r}; completeness: {i_r}) Error: {e1}.")
+                                    print(f"Max retries exceeded. Returning available ratings. (relatedness & conciseness: {d_r}; completeness: {i_r})")
                                     return dict1, int1
 
 
