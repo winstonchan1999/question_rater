@@ -260,7 +260,7 @@ class QuestionRater:
                         retries = max_retry_attempts
                         while retries > 0:
                             try:
-                                print(f"(Error: {e}) Retry attempt #{max_retry_attempts-retries+1}/{max_retry_attempts} - Sleeping for 5 seconds.")
+                                print(f"Retry attempt #{max_retry_attempts-retries+1}/{max_retry_attempts} - Sleeping for 5 seconds. (Error: {e})")
                                 time.sleep(5)
                                 if future == future_1:
                                     future_1 = executor.submit(self.__get_ind, prompt1)
