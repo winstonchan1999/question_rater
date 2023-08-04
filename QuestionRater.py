@@ -268,13 +268,10 @@ class QuestionRater:
                                 if future == future_1:
                                     future_1 = executor.submit(self.__get_ind, prompt1)
                                     result = future_1.result()
+                                    dict1 = result
                                 elif future == future_2:
                                     future_2 = executor.submit(self.__get_qset, prompt2)
                                     result = future_2.result()
-
-                                if isinstance(result, dict):
-                                    dict1 = result
-                                elif isinstance(result, int):
                                     int1 = result
 
                                 if dict1 is not None and int1 is not None:
@@ -298,50 +295,3 @@ class QuestionRater:
                                     
                                     print(f"Max retries exceeded. Returning available ratings. (relatedness & conciseness: {d_r}; completeness: {i_r})")
                                     return dict1, int1
-
-
-
-    # def get_all_ratings_sequential(self, QA_dict : dict):
-
-    #         try:
-
-    #             self.__check_dict(QA_dict)
-
-    #             rating_dict = {}
-
-    #             for key, value in prompt_config.items():
-
-    #                 if value.get_rating_method() == 'individual':
-    #                     new_dict = self.get_rating(QA_dict, key)
-    #                     if not rating_dict:
-    #                         rating_dict = new_dict
-    #                         for _key in rating_dict:
-    #                             rating_dict[_key] = [rating_dict[_key]]
-    #                     else:
-    #                         for _key in new_dict:
-    #                             if _key in rating_dict:
-    #                                 rating_dict[_key].append(new_dict[_key])
-
-    #                 elif value.get_rating_method() == 'set':
-    #                     rating = self.get_qset_rating(QA_dict, key)
-    #                     if not rating_dict:
-    #                         for question in QA_dict['questions']:
-    #                             rating_dict[question] = [rating]
-    #                     else:
-    #                         for _key in rating_dict:
-    #                             rating_dict[_key].append(rating)
-
-    #             return rating_dict
-            
-    #         except (
-    #             openai.error.Timeout, 
-    #             openai.error.APIError, 
-    #             openai.error.APIConnectionError,
-    #             openai.error.InvalidRequestError,
-    #             openai.error.AuthenticationError,
-    #             openai.error.PermissionError,
-    #             openai.error.RateLimitError,
-    #             Exception
-    #         ) as e:
-    #             print(f"Exception: {e}")
-    #             pass
