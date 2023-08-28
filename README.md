@@ -12,8 +12,8 @@ For initialization, the class `QuestionRater` takes the string of the OpenAI API
 
 The method `get_rating()` is used to get ratings for each individual question in the question list. It takes two parameters:
 
-- `QA_dict`: a dictionary containing three keys - 'company', 'questions', and 'passage'
-- `criteria`: the string of the criterion to evaluate the questions on
+- `QA_dict`: a dictionary containing three keys - 'company', 'questions', 'passage', 'title, and 'language'
+- `criteria`: the string of the criteria to evaluate the questions on
 
 It returns the ratings as a Python dictionary (questions as keys; ratings as values). An example of the output dictionary:
 ```
@@ -47,7 +47,11 @@ QA_dict = {
 
     'passage' : 'Tesla model 3 is...'            ## the context passage from which the questions are generated
 
-    'title' : 'Accessing Tesla Model 3'          ## the section title of the passage
+    'title' : [
+        'Accessing Tesla Model 3'                ## the section title(s) of the passage
+    ],
+
+    'language' : 'English'                       ## the language that the passage and questions are in
 }
 ```
 
@@ -55,7 +59,7 @@ QA_dict = {
 
 The method `get_qset_rating()` is used to get a single rating for a list of questions. It takes two parameters:
 
-- `QA_dict`: a dictionary containing four keys - 'company', 'questions', 'passage', and 'title'.
+- `QA_dict`: a dictionary containing four keys - 'company', 'questions', 'passage', 'title', and 'language'.
 - `criteria`: the string of the criterion to evaluate the questions on
 
 For each call to this method, it returns a single digit integer of the rating.
@@ -68,7 +72,7 @@ The method `get_rating_with_custom_prompt()` takes a custom prompt as the sole p
 
 The method `get_all_ratings()` is used to get the ratings on all criteria for a list of questions. It takes one parameter:
 
-- `QA_dict`: a dictionary containing four keys - 'company', 'questions', 'passage', and 'title'.
+- `QA_dict`: a dictionary containing four keys - 'company', 'questions', 'passage', 'title', and 'language'.
 
 The method returns 1) a Python dictionary, and 2) an integer.
 
