@@ -57,7 +57,7 @@ class QuestionRater:
         instructions = '\n'.join(prompt_list)
 
         prompt = f"""
-            You will be provided with a passage extracted from a {QA_dict['company']} manual and its section title.
+            You will be provided with a {QA_dict['language']} passage extracted from a {QA_dict['company']} manual and its section title.
 
             Instructions:
             1. Read the passage carefully.
@@ -83,7 +83,7 @@ class QuestionRater:
     def __get_qset_prompt(self, QA_dict : dict, criteria : str):
 
         prompt = f"""
-            You will be provided with a passage extracted from a {QA_dict['company']} manual and its section title.
+            You will be provided with a {QA_dict['language']} passage extracted from a {QA_dict['company']} manual and its section title.
 
             Instructions:
             {prompt_config[criteria].get_instructions()}
@@ -117,7 +117,7 @@ class QuestionRater:
 
     def __check_dict(self, dic : dict):
         
-        required_keys = {'company', 'questions', 'passage', 'title'}
+        required_keys = {'company', 'questions', 'passage', 'title', 'language'}
 
         if not required_keys.issubset(dic.keys()):
             raise ValueError("Missing required keys")
@@ -133,8 +133,11 @@ class QuestionRater:
                 if not isinstance(value, str):
                     raise TypeError("Value for 'passage' must be a string.")
             elif key == 'title':
+                if not isinstance(value, list):
+                    raise TypeError("Value for 'title' must be a list.")
+            elif key == 'language':
                 if not isinstance(value, str):
-                    raise TypeError("Value for 'title' must be a string.")
+                    raise TypeError("Value for 'language' must be a string.")
 
 
 
