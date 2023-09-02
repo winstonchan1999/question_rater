@@ -84,18 +84,6 @@ For each criterion, [prompt_config.py](prompt_config.py) stores:
 
 `prompt_config` is a dictionary holding the instructions for all criteria.
 
-## model_config.py
-
-The `model_config` dictionary in [model_config.py](model_config.py) stores the OpenAI chat completion method configurations. An example of the model_config dictionary:
-
-```config
-config_dict = {
-    'model' : "gpt-3.5-turbo",
-    'temperature' : 0,
-    'n' : 1
-}
-```
-
 ## Example Usage
 
 Please refer to [example.ipynb](example.ipynb).
