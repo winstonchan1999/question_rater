@@ -1,9 +1,9 @@
 import openai
-from model_config import model_config
 from prompt_config import prompt_config
 import concurrent.futures
 import textwrap
 import time
+import tiktoken
 
 
 
@@ -21,29 +21,28 @@ class QuestionRater:
 
     def __init__(self, key : str):
         openai.api_key = key
-        self.model_config = model_config
 
 
 
-    def __get_completion(self, prompt):
+    def __get_completion(self, prompt, model):
         messages = [{"role": "user", "content": prompt}]
         response = openai.ChatCompletion.create(
             messages = messages,
-            model = self.model_config['model'],
-            temperature = self.model_config['temperature'],
-            n = self.model_config['n'],
+            model = model,
+            temperature = 0,
+            n = 1,
         )
         return response.choices[0].message["content"]
 
 
 
-    def __get_completion_maxtoken(self, prompt, max_token):
+    def __get_completion_maxtoken(self, prompt, max_token, model):
         messages = [{"role": "user", "content": prompt}]
         response = openai.ChatCompletion.create(
             messages = messages,
-            model = self.model_config['model'],
-            temperature = self.model_config['temperature'],
-            n = self.model_config['n'],
+            model = model,
+            temperature = 0,
+            n = 1,
             max_tokens = max_token
         )
         return response.choices[0].message["content"]
@@ -152,9 +151,24 @@ class QuestionRater:
         while retries > 0:
             try:
                 prompt = self.__get_prompt(QA_dict, [criteria.lower()])
-                response = self.__get_completion(prompt)
+
+                encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+                num_tokens = len(encoding.encode(prompt))
+                q_string = '\n'.join(QA_dict['questions'])
+                num_q_tokens = len(encoding.encode(q_string))
+
+                if num_tokens + num_q_tokens > 3900:
+                    response = self.__get_completion(prompt, 'gpt-3.5-turbo-16k')
+                else:
+                    response = self.__get_completion(prompt, 'gpt-3.5-turbo')
                 
-                return eval(response)
+                final_output = eval(response)
+
+                for key in final_output:
+                    if isinstance(final_output[key], list):
+                        final_output[key] = final_output[key][0]
+
+                return final_output
             except (
                 openai.error.Timeout, 
                 openai.error.APIError,
@@ -179,9 +193,17 @@ class QuestionRater:
         while retries > 0:
             try:
                 prompt = self.__get_qset_prompt(QA_dict, criteria.lower())
-                response = self.__get_completion(prompt)
+
+                encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+                num_tokens = len(encoding.encode(prompt))
+
+                if num_tokens > 4000:
+                    response = self.__get_completion(prompt, 'gpt-3.5-turbo-16k')
+                else:
+                    response = self.__get_completion(prompt, 'gpt-3.5-turbo')
+
                 final_prompt = self.__get_qset_final_prompt(response)
-                final_response = self.__get_completion_maxtoken(final_prompt, 1)
+                final_response = self.__get_completion_maxtoken(final_prompt, 1, 'gpt-3.5-turbo')
                 return int(final_response)
             except (
                 openai.error.Timeout, 
@@ -201,7 +223,12 @@ class QuestionRater:
         retries = max_retry_attempts
         while retries > 0:
             try:
-                response = self.__get_completion(prompt)
+                encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+                num_tokens = len(encoding.encode(prompt))
+                if num_tokens > 3700:
+                    response = self.__get_completion(prompt, 'gpt-3.5-turbo-16k')
+                else:
+                    response = self.__get_completion(prompt, 'gpt-3.5-turbo')
                 return response
             except (
                 openai.error.Timeout, 
@@ -216,16 +243,30 @@ class QuestionRater:
 
 
 
-    def __get_ind(self, prompt : str):
-        response = self.__get_completion(prompt)
+    def __get_ind(self, prompt : str, QA_dict : dict):
+
+        encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+        num_tokens = len(encoding.encode(prompt))
+        q_string = '\n'.join(QA_dict['questions'])
+        num_q_tokens = len(encoding.encode(q_string))
+
+        if num_tokens + num_q_tokens > 3900:
+            response = self.__get_completion(prompt, 'gpt-3.5-turbo-16k')
+        else:
+            response = self.__get_completion(prompt, 'gpt-3.5-turbo')
         return eval(response)
 
 
 
     def __get_qset(self, prompt : str):
-        response = self.__get_completion(prompt)
+        encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+        num_tokens = len(encoding.encode(prompt))
+        if num_tokens > 3700:
+            response = self.__get_completion(prompt, 'gpt-3.5-turbo-16k')
+        else:
+            response = self.__get_completion(prompt, 'gpt-3.5-turbo')
         final_prompt = self.__get_qset_final_prompt(response)
-        final_response = self.__get_completion_maxtoken(final_prompt, 1)
+        final_response = self.__get_completion_maxtoken(final_prompt, 1, 'gpt-3.5-turbo')
         return int(final_response)
 
 
@@ -244,7 +285,7 @@ class QuestionRater:
         int1 = None
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
-                future_1 = executor.submit(self.__get_ind, prompt1)
+                future_1 = executor.submit(self.__get_ind, prompt1, QA_dict)
                 future_2 = executor.submit(self.__get_qset, prompt2)
                 
                 for future in concurrent.futures.as_completed([future_1, future_2]):
@@ -269,7 +310,7 @@ class QuestionRater:
                                 print(f"Retry attempt #{max_retry_attempts-retries+1}/{max_retry_attempts} - Sleeping for 5 seconds. (Error: {e})")
                                 time.sleep(5)
                                 if future == future_1:
-                                    future_1 = executor.submit(self.__get_ind, prompt1)
+                                    future_1 = executor.submit(self.__get_ind, prompt1, QA_dict)
                                     result = future_1.result()
                                     dict1 = result
                                 elif future == future_2:
