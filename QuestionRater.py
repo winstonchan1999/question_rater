@@ -25,6 +25,18 @@ class QuestionRater:
 
 
     def __get_completion(self, prompt, model):
+
+        """
+        Private method to get completion from OpenAI through the API.
+
+        Args:
+            prompt (string):    the prompt to submit to GPT.
+            model (string):     what GPT model to get the completion from.
+        
+        Returns:
+            response (string):  the response from GPT.
+        """
+
         messages = [{"role": "user", "content": prompt}]
         response = openai.ChatCompletion.create(
             messages = messages,
@@ -37,6 +49,19 @@ class QuestionRater:
 
 
     def __get_completion_maxtoken(self, prompt, max_token, model):
+
+        """
+        Private method to get completion from OpenAI through the API with specification of max_token.
+
+        Args:
+            prompt (string):    the prompt to submit to GPT.
+            max_token (int):    max_token allowed for the response.
+            model (string):     what GPT model to get the completion from.
+        
+        Returns:
+            response (string):  the response from GPT.
+        """
+
         messages = [{"role": "user", "content": prompt}]
         response = openai.ChatCompletion.create(
             messages = messages,
@@ -50,6 +75,17 @@ class QuestionRater:
 
 
     def __get_prompt(self, QA_dict : dict, criteria : list):
+
+        """
+        Private method to construct the prompt for individual ratings.
+
+        Args:
+            QA_dict (dict):     dictionary holding the information required for prompt construction (please refer to README).
+            criteria (list):    a list of criteria to evaluate the questions on.
+        
+        Returns:
+            prompt (string):    the dedented prompt.
+        """
 
         prompt_list = [prompt_config[c].get_instructions() for c in criteria]
 
@@ -81,6 +117,17 @@ class QuestionRater:
 
     def __get_qset_prompt(self, QA_dict : dict, criteria : str):
 
+        """
+        Private method to construct the prompt for individual ratings.
+
+        Args:
+            QA_dict (dict):     dictionary holding the information required for prompt construction (please refer to README).
+            criteria (str):     the criterion to evaluate the questions on.
+        
+        Returns:
+            prompt (string):    the dedented prompt.
+        """
+
         prompt = f"""
             You will be provided with a {QA_dict['language']} passage extracted from a {QA_dict['company']} manual and its section title.
 
@@ -100,6 +147,17 @@ class QuestionRater:
 
     def __get_qset_final_prompt(self, response: str):
         
+        """
+        Private method to construct the prompt for set ratings.
+
+        Args:
+            QA_dict (dict):     dictionary holding the information required for prompt construction (please refer to README).
+            criteria (list):    a list of criteria to evaluate the questions on.
+        
+        Returns:
+            prompt (string):    the dedented prompt.
+        """
+
         final_prompt = f'''
             Given {response},
             Compare x and y:
@@ -116,6 +174,16 @@ class QuestionRater:
 
     def __check_dict(self, dic : dict):
         
+        """
+        Private method to check that the QA_dict is valid.
+
+        Args:
+            dict (dict):        the QA_dict to be validated.
+        
+        Action:
+            raise errors if necessary
+        """
+
         required_keys = {'company', 'questions', 'passage', 'title', 'language'}
 
         if not required_keys.issubset(dic.keys()):
@@ -142,6 +210,18 @@ class QuestionRater:
 
     def get_rating(self, QA_dict : dict, criteria : str):
 
+        """
+        Public method to get individual ratings for a set of questions.
+
+        Args:
+            QA_dict (dict):     the dictionary holding the required information.
+            criteria (str):     the criterion to rate the questions on.
+        
+        Returns:
+            output (dict):      a dictionary with questions as the keys, and their ratings as the values.
+            alt_output (int):   returns 0 if max retried reached.
+        """
+
         if prompt_config[criteria].get_rating_method() != 'individual':
             raise ValueError(f"You cannot use get_rating() with criteria '{criteria}'. Please use get_qset_rating() instead.") 
 
@@ -152,6 +232,7 @@ class QuestionRater:
             try:
                 prompt = self.__get_prompt(QA_dict, [criteria.lower()])
 
+                ## counts the number of tokens of the prompt and use the appropriate model accordingly
                 encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
                 num_tokens = len(encoding.encode(prompt))
                 q_string = '\n'.join(QA_dict['questions'])
@@ -164,6 +245,8 @@ class QuestionRater:
                 
                 final_output = eval(response)
 
+                ## this is to check whether GPT is returning a correct format of dictionary
+                ## sometimes it returns the ratings as a list of duplicated numbers, when we only need a single integer.
                 for key in final_output:
                     if isinstance(final_output[key], list):
                         final_output[key] = final_output[key][0]
@@ -184,6 +267,18 @@ class QuestionRater:
 
     def get_qset_rating(self, QA_dict : dict, criteria : str):
 
+        """
+        Public method to get set ratings for a set of questions.
+
+        Args:
+            QA_dict (dict):     the dictionary holding the required information.
+            criteria (str):     the criterion to rate the questions on.
+        
+        Returns:
+            output (int):       the final rating.
+            alt_output (int):   returns 0 if max retried reached.
+        """
+
         if prompt_config[criteria].get_rating_method() != 'set':
             raise ValueError(f"You cannot use get_qset_rating() with criteria '{criteria}'. Please use get_rating() instead.")
 
@@ -194,6 +289,7 @@ class QuestionRater:
             try:
                 prompt = self.__get_qset_prompt(QA_dict, criteria.lower())
 
+                ## counts the number of tokens of the prompt and use the appropriate model accordingly
                 encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
                 num_tokens = len(encoding.encode(prompt))
 
@@ -220,9 +316,21 @@ class QuestionRater:
 
     def get_rating_with_custom_prompt(self, prompt : str):
 
+        """
+        Public method to get a reponse with a custom prompt.
+
+        Args:
+            prompt (str):       the prompt you are giving to GPT.
+        
+        Returns:
+            response (str):     the response from GPT.
+            alt_output (int):   returns 0 if max retried reached.
+        """
+
         retries = max_retry_attempts
         while retries > 0:
             try:
+                ## counts the number of tokens of the prompt and use the appropriate model accordingly
                 encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
                 num_tokens = len(encoding.encode(prompt))
                 if num_tokens > 3700:
@@ -245,6 +353,18 @@ class QuestionRater:
 
     def __get_ind(self, prompt : str, QA_dict : dict):
 
+        """
+        Private method to get individual ratings. Created separately to facilitate concurrent prompting.
+
+        Args:
+            prompt (str):       the prompt you are giving to GPT.
+            QA_dict (dict):     the dictionary holding the required information.
+        
+        Returns:
+            response (dict):     the response from GPT.
+        """
+
+        ## counts the number of tokens of the prompt and use the appropriate model accordingly
         encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
         num_tokens = len(encoding.encode(prompt))
         q_string = '\n'.join(QA_dict['questions'])
@@ -259,6 +379,18 @@ class QuestionRater:
 
 
     def __get_qset(self, prompt : str):
+
+        """
+        Private method to get set ratings. Created separately to facilitate concurrent prompting.
+
+        Args:
+            prompt (str):       the prompt you are giving to GPT.
+        
+        Returns:
+            response (int):     the response from GPT.
+        """
+
+        ## counts the number of tokens of the prompt and use the appropriate model accordingly
         encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
         num_tokens = len(encoding.encode(prompt))
         if num_tokens > 3700:
@@ -273,17 +405,31 @@ class QuestionRater:
 
     def get_all_ratings(self, QA_dict : dict):
 
+        """
+        Public method to get all three ratings concurrently.
+
+        Args:
+            QA_dict (dict):         the dictionary holding the required information.
+        
+        Returns:
+            ratings (dict, int):    the dictionary and integer holding the relatedness, conciseness, and completeness ratings.
+            alt_output (int):       returns 0 for either of the outputs if max retried reached.
+        """
+
         self.__check_dict(QA_dict)
 
+        ## getting the list of individual and set rating criteria
         in_list = [key for key, value in prompt_config.items() if value.get_rating_method() == 'individual']
         set_list = [key for key, value in prompt_config.items() if value.get_rating_method() == 'set']
         
+        ## prompt construction
         prompt1 = self.__get_prompt(QA_dict, in_list)
         prompt2 = self.__get_qset_prompt(QA_dict, set_list[0])
 
         dict1 = None
         int1 = None
 
+        ## prompting concurrently
         with concurrent.futures.ThreadPoolExecutor() as executor:
                 future_1 = executor.submit(self.__get_ind, prompt1, QA_dict)
                 future_2 = executor.submit(self.__get_qset, prompt2)
