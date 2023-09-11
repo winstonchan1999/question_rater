@@ -12,7 +12,7 @@ For initialization, the class `QuestionRater` takes the string of the OpenAI API
 
 The method `get_rating()` is used to get ratings for each individual question in the question list. It takes two parameters:
 
-- `QA_dict`: a dictionary containing three keys - 'company', 'questions', 'passage', 'title, and 'language'
+- `QA_dict`: a dictionary containing five keys - 'company', 'questions', 'passage', 'title', and 'language'
 - `criteria`: the string of the criteria to evaluate the questions on
 
 It returns the ratings as a Python dictionary (questions as keys; ratings as values). An example of the output dictionary:
@@ -59,8 +59,8 @@ QA_dict = {
 
 The method `get_qset_rating()` is used to get a single rating for a list of questions. It takes two parameters:
 
-- `QA_dict`: a dictionary containing four keys - 'company', 'questions', 'passage', 'title', and 'language'.
-- `criteria`: the string of the criterion to evaluate the questions on
+- `QA_dict`: a dictionary containing give keys - 'company', 'questions', 'passage', 'title', and 'language'.
+- `criteria`: the string of the criteria to evaluate the questions on
 
 For each call to this method, it returns a single digit integer of the rating.
 
